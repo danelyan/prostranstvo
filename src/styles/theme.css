@@ -1,17 +1,16 @@
 @import "tailwindcss";
 
 /*
-  Tokens transposed from DESIGN.md (Silencio visual language).
-  Palette ends at #000 / #dbdad9 / #808080 / #fff — no chromatic accents.
+  PROSTRANSTVO — full-cycle interior studio.
+  Monochrome system from claude-code design: #000 / #dbdad9 / #808080 / #fff.
+  Inter (100–700) carries the page, PT Mono is the museum-label voice.
 */
 @theme {
-  /* Colors */
   --color-ink: #000000;
   --color-paper: #dbdad9;
   --color-graphite: #808080;
   --color-bleach: #ffffff;
 
-  /* Font families (substitutes per DESIGN.md) */
   --font-haasr: "Inter", ui-sans-serif, system-ui, -apple-system,
     BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   --font-haast: "Inter", ui-sans-serif, system-ui, -apple-system,
@@ -19,7 +18,6 @@
   --font-mono: "PT Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
     monospace;
 
-  /* Type scale */
   --text-micro: 9px;
   --text-micro--line-height: 1.2;
   --text-label: 11px;
@@ -34,10 +32,9 @@
   --text-heading-sm--line-height: 1;
   --text-heading: 58px;
   --text-heading--line-height: 0.9;
-  --text-display: clamp(56px, 13vw, 141px);
-  --text-display--line-height: 0.9;
+  --text-display: clamp(48px, 11vw, 172px);
+  --text-display--line-height: 0.86;
 
-  /* Spacing (named tokens from DESIGN.md) */
   --spacing-7: 7px;
   --spacing-14: 14px;
   --spacing-17: 17px;
@@ -48,10 +45,74 @@
   --spacing-144: 144px;
   --spacing-173: 173px;
 
-  /* Border radius */
   --radius-card: 7.2px;
   --radius-surface: 43.2px;
   --radius-pill: 129.6px;
+
+  --ease-silk: cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* Entrance choreography */
+  --animate-mask-up: maskUp 1s cubic-bezier(0.16, 1, 0.3, 1) both;
+  --animate-fade-in: fadeIn 1.2s ease both;
+  --animate-panel-in: panelIn 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+  --animate-card-in: cardIn 0.55s cubic-bezier(0.16, 1, 0.3, 1) both;
+  --animate-backdrop-in: backdropIn 0.4s ease both;
+  --animate-marquee: marquee 38s linear infinite;
+}
+
+@keyframes maskUp {
+  from {
+    transform: translateY(110%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes panelIn {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes cardIn {
+  from {
+    opacity: 0;
+    transform: translateY(28px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes backdropIn {
+  from {
+    opacity: 0;
+    backdrop-filter: blur(0px);
+  }
+  to {
+    opacity: 1;
+    backdrop-filter: blur(6px);
+  }
+}
+@keyframes marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
 }
 
 @layer base {
@@ -67,6 +128,7 @@
     font-weight: 400;
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
+    overflow-x: hidden;
   }
 
   ::selection {
@@ -77,9 +139,59 @@
   button {
     font-family: inherit;
   }
+
+  input,
+  select,
+  textarea {
+    font-family: inherit;
+  }
 }
 
 /* The single sanctioned depth tool — warm gray descending into white. */
 @utility lift-gradient {
   background-image: linear-gradient(0deg, var(--color-paper), var(--color-bleach));
+}
+
+/*
+  Scroll-reveal: hidden until [data-revealed] is set by the IntersectionObserver.
+  A strict, even rise — opacity + a short translate, no bounce.
+*/
+@utility reveal {
+  opacity: 0;
+  transform: translateY(26px);
+  transition:
+    opacity 1.1s var(--ease-silk),
+    transform 1.1s var(--ease-silk);
+}
+
+@layer utilities {
+  [data-revealed="true"].reveal,
+  [data-revealed="true"] .reveal-child {
+    opacity: 1;
+    transform: none;
+  }
+
+  .reveal-child {
+    opacity: 0;
+    transform: translateY(26px);
+    transition:
+      opacity 1.1s var(--ease-silk),
+      transform 1.1s var(--ease-silk);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.001ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.001ms !important;
+      scroll-behavior: auto !important;
+    }
+    .reveal,
+    .reveal-child {
+      opacity: 1 !important;
+      transform: none !important;
+    }
+  }
 }

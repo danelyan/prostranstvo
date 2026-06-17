@@ -1,168 +1,127 @@
-import type {
-  AnchorHTMLAttributes,
-  ButtonHTMLAttributes,
-  ReactNode,
+import {
+  useState,
+  type ButtonHTMLAttributes,
+  type CSSProperties,
+  type ReactNode,
 } from "react";
-import type { SpecRow } from "../data/elements";
+import { useMagnetic } from "../lib/effects";
 
-function cx(...parts: Array<string | false | null | undefined>): string {
+export function cx(...parts: Array<string | false | null | undefined>): string {
   return parts.filter(Boolean).join(" ");
 }
 
+const PILL_TRANSITION: CSSProperties = {
+  transition:
+    "transform .35s var(--ease-silk), background-color .5s var(--ease-silk), color .5s var(--ease-silk), border-color .5s var(--ease-silk)",
+};
+
 /* ---------------------------------------------------------------- Pill button
-   Transparent fill, 1px ink border, full pill radius. No color fill — the
-   outline IS the button (DESIGN.md › Pill Button). */
+   Full pill (129.6px), 1px border, fills on hover. `tone` controls the resting
+   palette so the same component works on white and on the black footer. */
 type PillButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
-  active?: boolean;
+  tone?: "ink" | "bleach";
+  solid?: boolean;
+  arrow?: boolean;
+  magnetic?: boolean;
+  full?: boolean;
 };
 
 export function PillButton({
-  active = false,
+  tone = "ink",
+  solid = false,
+  arrow = false,
+  magnetic = false,
+  full = false,
   className,
   children,
   ...rest
 }: PillButtonProps) {
+  const mag = useMagnetic<HTMLButtonElement>();
+
+  const palette = solid
+    ? tone === "ink"
+      ? "border-ink bg-ink text-bleach hover:bg-transparent hover:text-ink"
+      : "border-bleach bg-bleach text-ink hover:bg-transparent hover:text-bleach"
+    : tone === "ink"
+      ? "border-ink text-ink hover:bg-ink hover:text-bleach"
+      : "border-bleach text-bleach hover:bg-bleach hover:text-ink";
+
   return (
     <button
       type="button"
+      ref={magnetic ? mag.ref : undefined}
+      onMouseMove={magnetic ? mag.onMouseMove : undefined}
+      onMouseLeave={magnetic ? mag.onMouseLeave : undefined}
+      style={PILL_TRANSITION}
       {...rest}
       className={cx(
-        "inline-flex items-center justify-center gap-7 rounded-pill border bg-transparent px-29 py-14",
-        "font-haasr text-nav uppercase tracking-[0.08em] transition-opacity duration-200",
-        "disabled:cursor-not-allowed disabled:opacity-40",
-        active
-          ? "border-graphite text-graphite"
-          : "border-ink text-ink hover:opacity-60",
+        "group inline-flex items-center justify-center gap-14 rounded-pill border bg-transparent",
+        "px-[40px] py-[19px] font-haasr text-nav font-normal uppercase tracking-[0.18em]",
+        "cursor-pointer disabled:cursor-not-allowed disabled:opacity-40",
+        full && "w-full",
+        palette,
         className,
       )}
     >
       {children}
+      {arrow && (
+        <span className="font-mono transition-transform duration-500 ease-[cubic-bezier(.16,1,.3,1)] group-hover:translate-x-1">
+          →
+        </span>
+      )}
     </button>
   );
 }
 
 /* ----------------------------------------------------------------- Ghost link
-   Reads as a continuation of the sentence; underline only on hover. */
-type GhostLinkProps = AnchorHTMLAttributes<HTMLAnchorElement>;
-
-export function GhostLink({ className, children, ...rest }: GhostLinkProps) {
+   Reads as a continuation of the sentence; a 1px rule grows on hover. */
+export function GhostLink({
+  href,
+  children,
+  className,
+  onClick,
+}: {
+  href: string;
+  children: ReactNode;
+  className?: string;
+  onClick?: () => void;
+}) {
   return (
     <a
-      {...rest}
+      href={href}
+      onClick={onClick}
       className={cx(
-        "text-ink no-underline hover:underline hover:underline-offset-[2px] hover:decoration-1",
+        "group relative inline-block font-haasr text-[14px] font-light text-ink no-underline",
         className,
       )}
     >
-      {children}
+      <span>{children}</span>
+      <span className="absolute -bottom-[2px] left-0 h-px w-full origin-left scale-x-100 bg-ink transition-transform duration-500 ease-[cubic-bezier(.16,1,.3,1)] group-hover:scale-x-0" />
     </a>
   );
 }
 
 /* ---------------------------------------------------------------- Museum label
-   PT Mono 11px — the only typographic ornament (DESIGN.md › Museum Label). */
-export function MuseumLabel({
+   PT Mono — the only typographic ornament. */
+export function Label({
   children,
   className,
-  muted = false,
+  tone = "ink",
 }: {
   children: ReactNode;
   className?: string;
-  muted?: boolean;
+  tone?: "ink" | "graphite";
 }) {
   return (
     <span
       className={cx(
-        "font-mono text-label uppercase tracking-[0.06em]",
-        muted ? "text-graphite" : "text-ink",
+        "font-mono text-label uppercase tracking-[0.14em]",
+        tone === "graphite" ? "text-graphite" : "text-ink",
         className,
       )}
     >
       {children}
     </span>
-  );
-}
-
-/* ------------------------------------------------------------- Micro caption */
-export function MicroCaption({
-  children,
-  className,
-}: {
-  children: ReactNode;
-  className?: string;
-}) {
-  return (
-    <span className={cx("font-haasr text-micro text-ink", className)}>
-      {children}
-    </span>
-  );
-}
-
-/* ------------------------------------------------------------ Display headline
-   HaasT weight 100 at the display size, paired with a PT Mono label. */
-export function DisplayHeadline({
-  children,
-  label,
-  align = "center",
-  className,
-}: {
-  children: ReactNode;
-  label?: ReactNode;
-  align?: "center" | "left";
-  className?: string;
-}) {
-  return (
-    <div className={cx(align === "center" ? "text-center" : "text-left", className)}>
-      <h1 className="font-haast text-display font-thin tracking-[-0.01em] text-ink">
-        {children}
-      </h1>
-      {label ? (
-        <div className="mt-22">
-          <MuseumLabel>{label}</MuseumLabel>
-        </div>
-      ) : null}
-    </div>
-  );
-}
-
-/* ---------------------------------------------------------- Section headline */
-export function SectionHeadline({
-  children,
-  className,
-}: {
-  children: ReactNode;
-  className?: string;
-}) {
-  return (
-    <h2
-      className={cx(
-        "font-haast text-heading font-thin tracking-[-0.01em] text-ink",
-        className,
-      )}
-    >
-      {children}
-    </h2>
-  );
-}
-
-/* --------------------------------------------------------- Statement block
-   Centered editorial copy, max-width 640px (DESIGN.md › Centered Statement). */
-export function StatementBlock({
-  children,
-  className,
-}: {
-  children: ReactNode;
-  className?: string;
-}) {
-  return (
-    <p
-      className={cx(
-        "mx-auto max-w-[640px] text-center font-haasr text-statement font-normal text-ink",
-        className,
-      )}
-    >
-      {children}
-    </p>
   );
 }
 
@@ -186,84 +145,62 @@ export function Hairline({
   );
 }
 
-/* --------------------------------------------------------------- Paper card */
-export function PaperCard({
-  children,
-  className,
+/* ---------------------------------------------------------------- Accordion
+   Shared by the design tab (multi, "Что я получу" open) and the FAQ (single).
+   The plus rotates to a minus; the body rises in with panelIn. */
+export function Accordion({
+  items,
+  mode = "single",
+  defaultOpen = [],
+  topRule = true,
 }: {
-  children: ReactNode;
-  className?: string;
+  items: { id: string; title: string; body: ReactNode }[];
+  mode?: "single" | "multi";
+  defaultOpen?: string[];
+  topRule?: boolean;
 }) {
-  return (
-    <div className={cx("rounded-card bg-paper p-29", className)}>{children}</div>
-  );
-}
+  const [open, setOpen] = useState<Set<string>>(() => new Set(defaultOpen));
 
-/* ---------------------------------------------------------------- Spec table
-   "Nutrition facts" catalog table — graphite rules keep dense data light. */
-export function SpecTable({
-  unit,
-  rows,
-  className,
-}: {
-  unit: string;
-  rows: SpecRow[];
-  className?: string;
-}) {
-  return (
-    <table
-      className={cx(
-        "w-full border-collapse font-mono text-label text-ink",
-        className,
-      )}
-    >
-      <thead>
-        <tr className="border-t border-b border-graphite">
-          <th className="py-7 text-left font-normal uppercase tracking-[0.06em]">
-            Состав
-          </th>
-          <th className="py-7 text-right font-normal uppercase tracking-[0.06em]">
-            {unit}
-          </th>
-        </tr>
-      </thead>
-      <tbody>
-        {rows.map((row) => (
-          <tr key={row.label} className="border-b border-graphite">
-            <td className="py-7 text-left">{row.label}</td>
-            <td className="py-7 text-right">{row.value}</td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
-  );
-}
+  const toggle = (id: string) =>
+    setOpen((prev) => {
+      const next = new Set(mode === "single" ? [] : prev);
+      if (prev.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
 
-/* ----------------------------------------------------- Floating placeholder
-   Stand-in for product photography: a warm-paper artifact floating on white,
-   captioned only by a PT Mono signature. Swap for real photos later. */
-export function PlaceholderImage({
-  label,
-  ratio = "4 / 5",
-  className,
-}: {
-  label?: string;
-  ratio?: string;
-  className?: string;
-}) {
   return (
-    <div
-      className={cx(
-        "relative flex items-end overflow-hidden rounded-card lift-gradient",
-        className,
-      )}
-      style={{ aspectRatio: ratio }}
-    >
-      {label ? (
-        <div className="p-14">
-          <MuseumLabel muted>{label}</MuseumLabel>
-        </div>
-      ) : null}
+    <div className={cx(topRule && "border-t border-ink")}>
+      {items.map((item) => {
+        const isOpen = open.has(item.id);
+        return (
+          <div key={item.id} className="border-b border-graphite">
+            <button
+              type="button"
+              onClick={() => toggle(item.id)}
+              className="flex w-full items-center justify-between gap-22 py-22 text-left"
+            >
+              <span className="font-haasr text-[18px] font-normal leading-[1.25] text-ink">
+                {item.title}
+              </span>
+              <span
+                className="font-mono text-[16px] text-ink transition-transform duration-500 ease-[cubic-bezier(.16,1,.3,1)]"
+                style={{ transform: isOpen ? "rotate(180deg)" : "none" }}
+              >
+                {isOpen ? "–" : "+"}
+              </span>
+            </button>
+            {isOpen && (
+              <p
+                className="max-w-[680px] pb-[26px] font-haasr text-body font-light leading-[1.55] text-ink"
+                style={{ animation: "var(--animate-panel-in)" }}
+              >
+                {item.body}
+              </p>
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 }

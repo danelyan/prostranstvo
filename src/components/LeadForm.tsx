@@ -1,17 +1,14 @@
 import {
   createContext,
   useContext,
+  useEffect,
   useMemo,
   useState,
   type FormEvent,
   type ReactNode,
 } from "react";
-import { useRoom } from "../room/RoomContext";
-import { elements } from "../data/elements";
-import { contacts } from "../data/content";
-import { Hairline, MuseumLabel, PillButton } from "./ui";
-
-const byId = new Map(elements.map((el) => [el.id, el]));
+import { contacts } from "../data/studio";
+import { Label, PillButton } from "./ui";
 
 interface LeadFormContextValue {
   open: () => void;
@@ -50,28 +47,29 @@ function LeadFormModal({
   isOpen: boolean;
   onClose: () => void;
 }) {
-  const room = useRoom();
   const [submitted, setSubmitted] = useState(false);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => {
+      document.body.style.overflow = prev;
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [isOpen, onClose]);
 
   if (!isOpen) return null;
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const form = event.currentTarget;
-    const data = new FormData(form);
-    const payload = {
-      phone: data.get("phone"),
-      telegram: data.get("telegram"),
-      whatsapp: data.get("whatsapp"),
-      consent: data.get("consent") === "on",
-      room: room.lines.map((line) => ({
-        ref: byId.get(line.id)?.ref,
-        name: byId.get(line.id)?.name,
-        qty: line.qty,
-      })),
-    };
-    // No backend in this MVP — the assembled room travels with the request.
-    console.info("Заявка ПРОСТРАНСТВО:", payload);
+    const data = new FormData(event.currentTarget);
+    // No backend in this MVP — log the assembled request.
+    console.info("Заявка PROSTRANSTVO:", Object.fromEntries(data.entries()));
     setSubmitted(true);
   };
 
@@ -81,122 +79,149 @@ function LeadFormModal({
   };
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center p-22">
+    <div
+      onClick={handleClose}
+      className="fixed inset-0 z-[100] flex items-start justify-center overflow-y-auto bg-ink/30 px-22 py-[40px] backdrop-blur-[6px]"
+      style={{ animation: "var(--animate-backdrop-in)" }}
+    >
       <div
-        className="absolute inset-0 bg-ink/30"
-        onClick={handleClose}
-        aria-hidden
-      />
-
-      <div className="relative z-10 flex max-h-[88dvh] w-full max-w-[560px] flex-col overflow-y-auto border border-ink bg-bleach">
-        <header className="flex items-baseline justify-between px-29 pt-29 pb-22">
-          <h2 className="font-haast text-heading-sm font-thin text-ink">
-            {submitted ? "Принято" : "Заявка"}
-          </h2>
-          <button
-            type="button"
-            onClick={handleClose}
-            className="font-mono text-label uppercase tracking-[0.06em] text-ink hover:opacity-60"
-          >
-            Закрыть ✕
-          </button>
-        </header>
-        <Hairline />
-
+        onClick={(e) => e.stopPropagation()}
+        className="mt-[40px] w-full max-w-[560px] rounded-card border border-ink bg-bleach p-[42px]"
+        style={{ animation: "var(--animate-card-in)" }}
+      >
         {submitted ? (
-          <div className="px-29 py-43">
-            <p className="font-haasr text-statement text-ink">
-              Спасибо. Мы очень скоро свяжемся с вами по указанным контактам и
-              соберём пространство по вашей комнате.
+          <div
+            className="py-22 text-center"
+            style={{ animation: "var(--animate-panel-in)" }}
+          >
+            <Label tone="graphite" className="tracking-[0.12em]">
+              Готово
+            </Label>
+            <h3 className="mt-[18px] font-haast text-[34px] font-thin leading-none tracking-[-0.01em] text-ink">
+              Заявка отправлена
+            </h3>
+            <p className="mx-auto mt-[18px] max-w-[380px] font-haasr text-[15px] font-light leading-[1.5] text-ink">
+              Мы очень скоро свяжемся с вами. Спасибо за&nbsp;доверие
+              к&nbsp;PROSTRANSTVO.
             </p>
-            <div className="mt-29">
-              <PillButton onClick={handleClose}>Хорошо</PillButton>
+            <div className="mt-[32px] flex justify-center">
+              <PillButton onClick={handleClose}>Закрыть</PillButton>
             </div>
           </div>
         ) : (
-          <form onSubmit={handleSubmit} className="px-29 py-29">
-            {room.lines.length > 0 ? (
-              <div className="mb-29">
-                <MuseumLabel muted>Ваша комната</MuseumLabel>
-                <ul className="mt-14">
-                  {room.lines.map((line) => {
-                    const el = byId.get(line.id);
-                    if (!el) return null;
-                    return (
-                      <li
-                        key={line.id}
-                        className="flex items-baseline justify-between border-b border-graphite py-7 font-mono text-label text-ink"
-                      >
-                        <span>{el.name}</span>
-                        <span>×{line.qty}</span>
-                      </li>
-                    );
-                  })}
-                </ul>
+          <>
+            <div className="flex items-start justify-between">
+              <div>
+                <Label tone="graphite" className="tracking-[0.12em]">
+                  Заявка
+                </Label>
+                <h3 className="mt-14 font-haast text-[30px] font-thin leading-none tracking-[-0.01em] text-ink">
+                  Узнать стоимость
+                  <br />
+                  проекта
+                </h3>
               </div>
-            ) : (
-              <p className="mb-29 font-haasr text-body text-graphite">
-                Комната пока пуста — оставьте заявку, и мы подберём элементы
-                интерьера вместе с вами.
-              </p>
-            )}
-
-            <div className="flex flex-col gap-22">
-              <Field name="phone" label="Телефон *" type="tel" required placeholder="+7 ___ ___ __ __" />
-              <Field name="telegram" label="Telegram" placeholder="@username" />
-              <Field name="whatsapp" label="WhatsApp" placeholder="+7 ___ ___ __ __" />
+              <button
+                type="button"
+                onClick={handleClose}
+                aria-label="Закрыть"
+                className="text-[24px] font-extralight leading-none text-ink transition-opacity hover:opacity-60"
+              >
+                ×
+              </button>
             </div>
 
-            <label className="mt-29 flex items-start gap-14 font-haasr text-micro text-ink">
-              <input
-                type="checkbox"
-                name="consent"
+            <p className="mt-[18px] font-haasr text-[14px] font-light leading-[1.5] text-ink">
+              Оставьте данные — мы свяжемся в течение рабочего дня и обсудим ваш
+              объект, бюджет и сроки.
+            </p>
+
+            <form onSubmit={handleSubmit} className="mt-[28px] flex flex-col gap-22">
+              <Input name="name" placeholder="Ваше имя" required />
+              <Input name="phone" type="tel" placeholder="Телефон" required />
+              <Input name="address" placeholder="Адрес объекта" />
+              <Input name="area" type="number" placeholder="Площадь, м²" />
+              <select
+                name="channel"
                 required
-                className="mt-1 h-[14px] w-[14px] accent-black"
-              />
-              <span>
-                Я подтверждаю ознакомление и даю согласие на обработку моих
-                персональных данных в порядке и на условиях, указанных в Политике
-                обработки персональных данных.
-              </span>
-            </label>
+                defaultValue=""
+                className="w-full border-b border-ink bg-transparent py-[12px] font-haasr text-body font-light text-ink outline-none"
+              >
+                <option value="" disabled>
+                  Удобный способ связи
+                </option>
+                <option>Telegram</option>
+                <option>WhatsApp</option>
+                <option>Телефон</option>
+              </select>
 
-            <div className="mt-29 flex flex-wrap items-center gap-22">
-              <PillButton type="submit">Отправить</PillButton>
-              <MuseumLabel muted>{contacts.phone}</MuseumLabel>
+              <label className="flex items-start gap-[10px] font-haasr text-[12px] font-light leading-[1.45] text-graphite">
+                <input
+                  required
+                  type="checkbox"
+                  name="consent"
+                  className="mt-[3px] accent-black"
+                />
+                <span>
+                  Я подтверждаю согласие на обработку моих персональных данных в
+                  порядке и на условиях политики обработки персональных данных.
+                </span>
+              </label>
+
+              <PillButton type="submit" solid full className="mt-[6px]">
+                Отправить заявку
+              </PillButton>
+            </form>
+
+            <div className="mt-22 flex flex-wrap gap-22 border-t border-graphite pt-[18px]">
+              <a
+                href={contacts.telegram}
+                target="_blank"
+                rel="noreferrer"
+                className="font-mono text-label uppercase tracking-[0.06em] text-ink hover:opacity-60"
+              >
+                Telegram ↗
+              </a>
+              <a
+                href={contacts.whatsapp}
+                target="_blank"
+                rel="noreferrer"
+                className="font-mono text-label uppercase tracking-[0.06em] text-ink hover:opacity-60"
+              >
+                WhatsApp ↗
+              </a>
+              <a
+                href={contacts.phoneHref}
+                className="font-mono text-label uppercase tracking-[0.06em] text-ink hover:opacity-60"
+              >
+                {contacts.phone}
+              </a>
             </div>
-          </form>
+          </>
         )}
       </div>
     </div>
   );
 }
 
-function Field({
+function Input({
   name,
-  label,
+  placeholder,
   type = "text",
   required = false,
-  placeholder,
 }: {
   name: string;
-  label: string;
+  placeholder: string;
   type?: string;
   required?: boolean;
-  placeholder?: string;
 }) {
   return (
-    <label className="block">
-      <span className="font-mono text-label uppercase tracking-[0.06em] text-graphite">
-        {label}
-      </span>
-      <input
-        name={name}
-        type={type}
-        required={required}
-        placeholder={placeholder}
-        className="mt-7 w-full border-b border-ink bg-transparent pb-7 font-haasr text-body text-ink outline-none placeholder:text-graphite focus:border-ink"
-      />
-    </label>
+    <input
+      name={name}
+      type={type}
+      placeholder={placeholder}
+      required={required}
+      className="w-full border-b border-ink bg-transparent py-[12px] font-haasr text-body font-light text-ink outline-none placeholder:text-graphite"
+    />
   );
 }

@@ -1,58 +1,74 @@
-import { useRoom } from "../room/RoomContext";
 import { useLeadForm } from "../components/LeadForm";
+import { PillButton } from "../components/ui";
 import { Container } from "../components/layout";
+import { contacts } from "../data/studio";
+import { useScrollProgress } from "../lib/effects";
+import { useStudio } from "../lib/studioState";
 
 const NAV = [
-  { href: "#studio", label: "Студия" },
-  { href: "#formats", label: "Форматы" },
-  { href: "#catalog", label: "Коллекции" },
-  { href: "#portfolio", label: "Портфолио" },
-  { href: "#contacts", label: "Контакты" },
+  { href: "#services", label: "Услуги" },
+  { href: "#spaces", label: "Пространства", spaces: true },
+  { href: "#contact", label: "Контакты" },
 ];
 
 export function Header() {
-  const room = useRoom();
   const lead = useLeadForm();
+  const studio = useStudio();
+  const progress = useScrollProgress();
 
   return (
-    <header className="sticky top-0 z-30 border-b border-ink bg-bleach/90 backdrop-blur-sm">
-      <Container className="flex items-center justify-between gap-22 py-14">
+    <nav className="sticky top-0 z-[60] border-b border-ink bg-bleach/[0.86] backdrop-blur-[14px]">
+      <Container className="flex items-center justify-between gap-22 py-[18px]">
         <a
           href="#top"
-          className="font-haasr text-nav uppercase tracking-[0.12em] text-ink"
+          className="whitespace-nowrap font-haasr text-[14px] font-light tracking-[0.42em] text-ink"
         >
-          ПРОСТРАНСТВО <sup className="text-[8px]">®</sup>
+          PROSTRANSTVO
         </a>
 
-        <nav className="hidden items-center gap-29 lg:flex">
-          {NAV.map((item) => (
+        <div className="flex items-center gap-[18px] md:gap-[34px]">
+          <div className="hidden items-center gap-[34px] md:flex">
+            {NAV.map((item) => (
+              <a
+                key={item.href}
+                href={item.href}
+                onClick={
+                  item.spaces
+                    ? (e) => {
+                        e.preventDefault();
+                        studio.goToService("portfolio");
+                      }
+                    : undefined
+                }
+                className="font-mono text-label uppercase tracking-[0.06em] text-ink opacity-70 transition-opacity duration-300 hover:opacity-100"
+              >
+                {item.label}
+              </a>
+            ))}
             <a
-              key={item.href}
-              href={item.href}
-              className="font-haasr text-nav uppercase tracking-[0.08em] text-ink hover:opacity-60"
+              href={contacts.phoneHref}
+              className="whitespace-nowrap font-haasr text-[13px] font-light tracking-[0.04em] text-ink"
             >
-              {item.label}
+              {contacts.phone}
             </a>
-          ))}
-        </nav>
+          </div>
 
-        <div className="flex items-center gap-22">
-          <button
-            type="button"
+          <PillButton
+            magnetic
             onClick={lead.open}
-            className="hidden font-mono text-label uppercase tracking-[0.06em] text-ink hover:opacity-60 sm:inline"
+            className="px-[18px] py-[11px] !tracking-[0.16em] sm:px-26 sm:py-[13px]"
           >
-            Написать нам
-          </button>
-          <button
-            type="button"
-            onClick={room.toggle}
-            className="font-mono text-label uppercase tracking-[0.06em] text-ink hover:opacity-60"
-          >
-            Комната ( {room.count} )
-          </button>
+            Узнать стоимость
+          </PillButton>
         </div>
       </Container>
-    </header>
+
+      {/* Strict scroll-progress rule that rides the bottom border. */}
+      <div
+        className="absolute bottom-[-1px] left-0 h-[2px] origin-left bg-ink"
+        style={{ width: "100%", transform: `scaleX(${progress})` }}
+        aria-hidden
+      />
+    </nav>
   );
 }

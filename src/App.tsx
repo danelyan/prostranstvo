@@ -1,35 +1,21 @@
-import { RoomProvider } from "./room/RoomContext";
 import { LeadFormProvider } from "./components/LeadForm";
-import { RoomDrawer } from "./components/RoomDrawer";
+import { StudioProvider } from "./lib/studioState";
 import { Header } from "./sections/Header";
 import { Hero } from "./sections/Hero";
-import { Manifesto } from "./sections/Manifesto";
-import { Process } from "./sections/Process";
-import { Formats } from "./sections/Formats";
-import { Catalog } from "./sections/Catalog";
-import { Portfolio } from "./sections/Portfolio";
-import { Faq } from "./sections/Faq";
-import { Contacts } from "./sections/Contacts";
-import { Footer } from "./sections/Footer";
+import { Services } from "./sections/Services";
+import { Contact } from "./sections/Contact";
 
 export default function App() {
   return (
-    <RoomProvider>
+    <StudioProvider>
       <LeadFormProvider>
         <Header />
         <main>
           <Hero />
-          <Manifesto />
-          <Process />
-          <Formats />
-          <Catalog />
-          <Portfolio />
-          <Faq />
-          <Contacts />
+          <Services />
         </main>
-        <Footer />
-        <RoomDrawer />
+        <Contact />
       </LeadFormProvider>
-    </RoomProvider>
+    </StudioProvider>
   );
 }

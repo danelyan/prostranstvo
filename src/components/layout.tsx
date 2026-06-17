@@ -12,7 +12,7 @@ export function Container({
   className?: string;
 }) {
   return (
-    <div className={cx("mx-auto w-full max-w-[1440px] px-22 md:px-43", className)}>
+    <div className={cx("mx-auto w-full max-w-[1440px] px-22 md:px-[40px]", className)}>
       {children}
     </div>
   );
