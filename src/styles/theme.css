@@ -32,7 +32,7 @@
   --text-heading-sm--line-height: 1;
   --text-heading: 58px;
   --text-heading--line-height: 0.9;
-  --text-display: clamp(48px, 11vw, 172px);
+  --text-display: clamp(40px, 11vw, 172px);
   --text-display--line-height: 0.86;
 
   --spacing-7: 7px;

@@ -25,7 +25,7 @@ export function Hero() {
             Студия полного цикла · Москва
           </div>
 
-          <h1 className="mt-[30px] font-haast text-display font-thin tracking-[-0.02em] whitespace-nowrap text-ink">
+          <h1 className="mt-[30px] font-haast text-display font-thin tracking-[-0.02em] text-ink max-sm:whitespace-normal sm:whitespace-nowrap">
             {WORD.map((ch, i) => (
               <span
                 key={i}
@@ -103,21 +103,26 @@ export function Hero() {
 
 /* Full-bleed photo conveyor — strict typographic rhythm, slow infinite drift. */
 function Marquee() {
-  const strip = [...gallery, ...gallery];
+  const renderTrack = (suffix: string) =>
+    gallery.map((item) => (
+      <div
+        key={`${item.src}${suffix}`}
+        className="h-[200px] w-[300px] shrink-0 md:h-[240px] md:w-[360px]"
+      >
+        <Photo src={item.src} alt={item.alt} className="h-full w-full" />
+      </div>
+    ));
+
   return (
     <div className="group overflow-hidden border-y border-ink py-22">
       <div
         className="flex w-max gap-22 group-hover:[animation-play-state:paused]"
         style={{ animation: "var(--animate-marquee)" }}
       >
-        {strip.map((item, i) => (
-          <div
-            key={i}
-            className="h-[200px] w-[300px] shrink-0 md:h-[240px] md:w-[360px]"
-          >
-            <Photo src={item.src} alt={item.alt} className="h-full w-full" />
-          </div>
-        ))}
+        <div className="flex shrink-0 gap-22">{renderTrack("")}</div>
+        <div className="flex shrink-0 gap-22" aria-hidden>
+          {renderTrack("-dup")}
+        </div>
       </div>
     </div>
   );

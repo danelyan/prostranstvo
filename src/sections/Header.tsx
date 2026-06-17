@@ -27,6 +27,12 @@ export function Header() {
         </a>
 
         <div className="flex items-center gap-[18px] md:gap-[34px]">
+          <a
+            href={contacts.phoneHref}
+            className="font-haasr text-[13px] font-light tracking-[0.04em] text-ink md:hidden"
+          >
+            {contacts.phone}
+          </a>
           <div className="hidden items-center gap-[34px] md:flex">
             {NAV.map((item) => (
               <a
